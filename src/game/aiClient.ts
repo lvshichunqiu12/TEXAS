@@ -7,7 +7,10 @@ export async function requestAiAction(state: GameState): Promise<PlayerAction> {
   if (playerIndex === null) return { type: "check" };
 
   const legalActions = getLegalActions(state, playerIndex);
-  const fallback = conservativeFallback(legalActions);
+  const player = state.players[playerIndex];
+  const toCall = Math.max(0, state.currentBet - player.bet);
+  const pot = totalPot(state);
+  const fallback = conservativeFallback(legalActions, state);
 
   try {
     const response = await fetch("/api/ai-action", {
@@ -18,18 +21,23 @@ export async function requestAiAction(state: GameState): Promise<PlayerAction> {
         table: {
           handId: state.handId,
           street: state.street,
-          pot: totalPot(state),
+          pot,
           currentBet: state.currentBet,
           bigBlind: state.settings.bigBlind,
-          community: state.community.map(cardLabel)
+          community: state.community.map(cardLabel),
+          activePlayers: state.players.filter((seat) => !seat.folded).length,
+          playersStillAbleToAct: state.players.filter((seat) => !seat.folded && !seat.allIn && seat.stack > 0).length
         },
         player: {
-          id: state.players[playerIndex].id,
-          name: state.players[playerIndex].name,
-          profile: state.players[playerIndex].profile ?? "均衡型",
-          stack: state.players[playerIndex].stack,
-          bet: state.players[playerIndex].bet,
-          holeCards: state.players[playerIndex].holeCards.map(cardLabel)
+          id: player.id,
+          name: player.name,
+          profile: player.profile ?? "均衡型",
+          stack: player.stack,
+          bet: player.bet,
+          toCall,
+          effectiveStackAfterCall: Math.max(0, player.stack - toCall),
+          callPotOdds: toCall > 0 ? Number((toCall / (pot + toCall)).toFixed(3)) : 0,
+          holeCards: player.holeCards.map(cardLabel)
         },
         opponents: state.players
           .filter((player) => player.id !== state.players[playerIndex].id)
@@ -45,7 +53,7 @@ export async function requestAiAction(state: GameState): Promise<PlayerAction> {
         legalActions,
         recentActions: state.logs.slice(0, 8)
       }),
-      signal: AbortSignal.timeout(12000)
+      signal: AbortSignal.timeout(35000)
     });
 
     if (!response.ok) return fallback;
@@ -70,10 +78,18 @@ function sanitizeAiAction(action: PlayerAction, legalActions: ReturnType<typeof 
   return { type: legal.type, amount: legal.amount };
 }
 
-function conservativeFallback(legalActions: ReturnType<typeof getLegalActions>): PlayerAction {
+function conservativeFallback(legalActions: ReturnType<typeof getLegalActions>, state: GameState): PlayerAction {
   const check = legalActions.find((action) => action.type === "check");
   if (check) return { type: "check" };
-  const call = legalActions.find((action) => action.type === "call" && (action.amount ?? 0) <= 10);
-  if (call) return { type: "call", amount: call.amount };
+  const player = state.currentPlayerIndex === null ? undefined : state.players[state.currentPlayerIndex];
+  const call = legalActions.find((action) => action.type === "call");
+  const potAfterCall = totalPot(state) + (call?.amount ?? 0);
+  const looseFallback = player?.profile === "娱乐型" || player?.profile === "松凶型";
+  const maxFallbackCall = looseFallback ? Math.max(state.settings.bigBlind * 10, potAfterCall * 0.56) : Math.max(state.settings.bigBlind * 8, potAfterCall * 0.48);
+  const affordableCall =
+    call && player && (state.settings.difficulty === "高手" || looseFallback)
+      ? (call.amount ?? 0) <= maxFallbackCall
+      : call && (call.amount ?? 0) <= state.settings.bigBlind;
+  if (call && affordableCall) return { type: "call", amount: call.amount };
   return { type: "fold" };
 }

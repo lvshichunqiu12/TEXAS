@@ -13,8 +13,8 @@ import type {
 } from "./types";
 
 const names = ["你", "Mira", "Stone", "Nova", "Chen", "Ivy", "Atlas", "River"];
-const standardProfiles = ["娱乐型", "紧凶型", "松凶型", "均衡型"] as const;
-const expertProfiles = ["紧凶型", "松凶型", "均衡型", "松凶型"] as const;
+const standardProfiles = ["娱乐型", "紧凶型", "松凶型", "均衡型", "娱乐型", "松凶型"] as const;
+const expertProfiles = ["娱乐型", "紧凶型", "松凶型", "均衡型", "松凶型", "紧凶型", "松凶型"] as const;
 const streetNames: Record<Street, string> = {
   preflop: "翻前",
   flop: "翻牌",
