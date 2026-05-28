@@ -53,17 +53,20 @@ function cardBackStyle(index: number) {
 
 function App() {
   const [game, setGame] = useState<GameState>(() => createGame());
-  const [betAmount, setBetAmount] = useState(10);
+  const [betAmountInput, setBetAmountInput] = useState("10");
   const current = game.currentPlayerIndex === null ? undefined : game.players[game.currentPlayerIndex];
   const human = game.players[0];
   const opponents = game.players.slice(1);
   const legalActions = useMemo(() => getLegalActions(game), [game]);
   const wagerAction = legalActions.find((action) => action.type === "bet" || action.type === "raise");
+  const betAmount = Number(betAmountInput);
+  const validBetAmount =
+    wagerAction && Number.isFinite(betAmount) && betAmount >= (wagerAction.min ?? 0) && betAmount <= (wagerAction.max ?? 0);
   const canAct = game.status === "playing" && current?.isHuman;
 
   useEffect(() => {
     if (!wagerAction) return;
-    setBetAmount(wagerAction.min ?? 0);
+    setBetAmountInput(String(wagerAction.min ?? 0));
   }, [wagerAction?.min, wagerAction?.max, game.handId, game.street]);
 
   useEffect(() => {
@@ -96,15 +99,6 @@ function App() {
   function act(action: PlayerAction) {
     if (!canAct) return;
     setGame((state) => performAction(state, action));
-  }
-
-  function updateBetAmount(value: number) {
-    if (!wagerAction) {
-      setBetAmount(0);
-      return;
-    }
-
-    setBetAmount(clamp(value, wagerAction.min ?? 0, wagerAction.max ?? 0));
   }
 
   return (
@@ -221,7 +215,7 @@ function App() {
             ))}
           </div>
 
-          <ActionPad legalActions={legalActions} disabled={!canAct} betAmount={betAmount} onAction={act} />
+          <ActionPad legalActions={legalActions} disabled={!canAct} betAmount={betAmount} canWager={Boolean(validBetAmount)} onAction={act} />
         </div>
 
         <div className="bet-rail">
@@ -235,24 +229,22 @@ function App() {
               type="range"
               min={wagerAction?.min ?? 0}
               max={wagerAction?.max ?? 0}
-              value={wagerAction ? clamp(betAmount, wagerAction.min ?? 0, wagerAction.max ?? 0) : 0}
+              value={wagerAction && Number.isFinite(betAmount) ? clamp(betAmount, wagerAction.min ?? 0, wagerAction.max ?? 0) : (wagerAction?.min ?? 0)}
               disabled={!canAct || !wagerAction}
               aria-label="下注额"
-              onChange={(event) => updateBetAmount(Number(event.target.value))}
+              onChange={(event) => setBetAmountInput(event.target.value)}
             />
             <input
-              className="bet-number-input"
+              className={`bet-number-input ${wagerAction && !validBetAmount ? "invalid" : ""}`}
               type="number"
-              min={wagerAction?.min ?? 0}
-              max={wagerAction?.max ?? 0}
               step={game.settings.bigBlind}
-              value={wagerAction ? clamp(betAmount, wagerAction.min ?? 0, wagerAction.max ?? 0) : 0}
+              value={betAmountInput}
               disabled={!canAct || !wagerAction}
               aria-label="输入下注额"
-              onChange={(event) => updateBetAmount(Number(event.target.value))}
-              onBlur={() => updateBetAmount(betAmount)}
+              onChange={(event) => setBetAmountInput(event.target.value)}
             />
           </div>
+          {wagerAction && <div className={`bet-range-hint ${validBetAmount ? "" : "invalid"}`}>合法范围 {wagerAction.min}-{wagerAction.max}</div>}
           <button className="mini-button primary" onClick={() => setGame(startNextHand)} disabled={game.status !== "handComplete"}>
             <Play size={15} />
             下一手
@@ -267,11 +259,13 @@ function ActionPad({
   legalActions,
   disabled,
   betAmount,
+  canWager,
   onAction
 }: {
   legalActions: LegalAction[];
   disabled: boolean;
   betAmount: number;
+  canWager: boolean;
   onAction: (action: PlayerAction) => void;
 }) {
   const has = (type: LegalAction["type"]) => legalActions.find((action) => action.type === type);
@@ -294,7 +288,7 @@ function ActionPad({
       </button>
       <button
         className="action primary"
-        disabled={disabled || !wager}
+        disabled={disabled || !wager || !canWager}
         onClick={() => onAction({ type: wager?.type ?? "bet", amount: betAmount })}
       >
         {wager?.label ?? "下注"}
