@@ -42,9 +42,13 @@ export function shuffle(deck: Card[]): Card[] {
 }
 
 export function cardLabel(card: Card) {
-  return `${card.rank}${suitSymbols[card.suit]}`;
+  return `${displayRank(card.rank)}${suitSymbols[card.suit]}`;
 }
 
 export function isRed(card: Card) {
   return card.suit === "hearts" || card.suit === "diamonds";
+}
+
+export function displayRank(rank: Rank) {
+  return rank === "T" ? "10" : rank;
 }

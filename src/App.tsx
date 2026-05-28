@@ -11,7 +11,7 @@ import {
   Users
 } from "lucide-react";
 import { type ReactNode, useEffect, useMemo, useState } from "react";
-import { isRed, suitSymbols } from "./game/cards";
+import { displayRank, isRed, suitSymbols } from "./game/cards";
 import { requestAiAction } from "./game/aiClient";
 import {
   createGame,
@@ -413,14 +413,14 @@ function seatPosition(index: number, opponentCount: number) {
 function PlayingCard({ card }: { card: PlayerState["holeCards"][number] }) {
   return (
     <div className={`playing-card ${isRed(card) ? "red" : ""}`}>
-      <span>{card.rank}</span>
+      <span>{displayRank(card.rank)}</span>
       <strong>{suitSymbols[card.suit]}</strong>
     </div>
   );
 }
 
 function TinyCard({ card }: { card: PlayerState["holeCards"][number] }) {
-  return <span className={`tiny-card ${isRed(card) ? "red" : ""}`}>{`${card.rank}${suitSymbols[card.suit]}`}</span>;
+  return <span className={`tiny-card ${isRed(card) ? "red" : ""}`}>{`${displayRank(card.rank)}${suitSymbols[card.suit]}`}</span>;
 }
 
 function CardBack({ index }: { index: number }) {
