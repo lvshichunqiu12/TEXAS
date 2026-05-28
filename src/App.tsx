@@ -98,6 +98,15 @@ function App() {
     setGame((state) => performAction(state, action));
   }
 
+  function updateBetAmount(value: number) {
+    if (!wagerAction) {
+      setBetAmount(0);
+      return;
+    }
+
+    setBetAmount(clamp(value, wagerAction.min ?? 0, wagerAction.max ?? 0));
+  }
+
   return (
     <main className="app-shell">
       <section className="hud">
@@ -226,12 +235,23 @@ function App() {
               type="range"
               min={wagerAction?.min ?? 0}
               max={wagerAction?.max ?? 0}
-              value={Math.min(betAmount, wagerAction?.max ?? betAmount)}
+              value={wagerAction ? clamp(betAmount, wagerAction.min ?? 0, wagerAction.max ?? 0) : 0}
               disabled={!canAct || !wagerAction}
               aria-label="下注额"
-              onChange={(event) => setBetAmount(Number(event.target.value))}
+              onChange={(event) => updateBetAmount(Number(event.target.value))}
             />
-            <strong>{wagerAction ? Math.min(betAmount, wagerAction.max ?? betAmount) : 0}</strong>
+            <input
+              className="bet-number-input"
+              type="number"
+              min={wagerAction?.min ?? 0}
+              max={wagerAction?.max ?? 0}
+              step={game.settings.bigBlind}
+              value={wagerAction ? clamp(betAmount, wagerAction.min ?? 0, wagerAction.max ?? 0) : 0}
+              disabled={!canAct || !wagerAction}
+              aria-label="输入下注额"
+              onChange={(event) => updateBetAmount(Number(event.target.value))}
+              onBlur={() => updateBetAmount(betAmount)}
+            />
           </div>
           <button className="mini-button primary" onClick={() => setGame(startNextHand)} disabled={game.status !== "handComplete"}>
             <Play size={15} />
@@ -347,6 +367,11 @@ function Leaderboard({ players }: { players: PlayerState[] }) {
 function formatSigned(value: number) {
   if (value > 0) return `+${value}`;
   return String(value);
+}
+
+function clamp(value: number, min: number, max: number) {
+  if (!Number.isFinite(value)) return min;
+  return Math.max(min, Math.min(max, value));
 }
 
 function Seat({

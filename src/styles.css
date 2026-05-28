@@ -724,7 +724,7 @@ p {
 
 .slider-block {
   display: grid;
-  grid-template-columns: auto 1fr auto;
+  grid-template-columns: auto 1fr 74px;
   align-items: center;
   gap: 10px;
   min-height: 44px;
@@ -737,10 +737,22 @@ p {
   accent-color: #e8bd67;
 }
 
-.slider-block strong {
-  min-width: 40px;
+.bet-number-input {
+  height: 34px;
+  padding: 0 8px;
+  border: 0;
+  border-radius: 8px;
+  outline: 0;
+  color: #ffe0a0;
+  background: rgba(255, 255, 255, 0.09);
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.12);
+  font-weight: 850;
   color: #ffe0a0;
   text-align: right;
+}
+
+.bet-number-input:disabled {
+  opacity: 0.45;
 }
 
 @media (max-height: 820px) {
