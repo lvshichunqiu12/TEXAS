@@ -26,6 +26,7 @@ export async function requestAiAction(state: GameState): Promise<PlayerAction> {
         player: {
           id: state.players[playerIndex].id,
           name: state.players[playerIndex].name,
+          profile: state.players[playerIndex].profile ?? "均衡型",
           stack: state.players[playerIndex].stack,
           bet: state.players[playerIndex].bet,
           holeCards: state.players[playerIndex].holeCards.map(cardLabel)
@@ -36,6 +37,7 @@ export async function requestAiAction(state: GameState): Promise<PlayerAction> {
             name: player.name,
             stack: player.stack,
             bet: player.bet,
+            profile: player.profile,
             folded: player.folded,
             allIn: player.allIn,
             lastAction: player.lastAction

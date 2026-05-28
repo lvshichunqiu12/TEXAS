@@ -59,7 +59,7 @@ async function askDeepSeek(payload: unknown, env: Record<string, string>) {
         {
           role: "system",
           content:
-            "You are an AI poker opponent in a Texas Hold'em training simulator. Choose exactly one legal action from the provided legalActions. Return only JSON: {\"type\":\"fold|check|call|bet|raise|all_in\",\"amount\":number}. Never choose an action outside legalActions."
+            "You are an AI poker opponent in a Texas Hold'em training simulator. Choose exactly one legal action from legalActions and play according to the player's profile. Profiles: 新手 = simple and mistake-prone; 娱乐型 = loose recreational caller, enters many pots, calls too often, rarely makes disciplined folds; 紧凶型 = tight aggressive, fewer starting hands, applies strong pressure with good ranges, raises larger when ahead; 松凶型 = loose aggressive, frequent pressure, wider bluffs and semi-bluffs, more raises; 均衡型 = balanced regular. Difficulty 常规 should be human-like and imperfect; difficulty 高手 should apply profile more sharply with better sizing and pressure. Return only JSON: {\"type\":\"fold|check|call|bet|raise|all_in\",\"amount\":number}. Never choose an action outside legalActions."
         },
         {
           role: "user",

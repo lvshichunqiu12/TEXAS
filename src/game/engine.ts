@@ -13,6 +13,8 @@ import type {
 } from "./types";
 
 const names = ["你", "Mira", "Stone", "Nova", "Chen", "Ivy", "Atlas", "River"];
+const standardProfiles = ["娱乐型", "紧凶型", "松凶型", "均衡型"] as const;
+const expertProfiles = ["紧凶型", "松凶型", "均衡型", "松凶型"] as const;
 const streetNames: Record<Street, string> = {
   preflop: "翻前",
   flop: "翻牌",
@@ -184,6 +186,7 @@ function startHand(settings: GameSettings, handId: number, dealerIndex: number, 
       stack: previous && previous.stack > 0 ? previous.stack : settings.initialStack,
       totalBuyIn: previous ? (previous.totalBuyIn ?? settings.initialStack) + (needsRebuy ? settings.initialStack : 0) : settings.initialStack,
       rebuyCount: previous ? (previous.rebuyCount ?? 0) + (needsRebuy ? 1 : 0) : 0,
+      profile: index === 0 ? undefined : previous?.profile ?? pickAiProfile(settings.difficulty),
       holeCards: [],
       folded: false,
       allIn: false,
@@ -228,6 +231,12 @@ function startHand(settings: GameSettings, handId: number, dealerIndex: number, 
     ],
     status: "playing"
   };
+}
+
+function pickAiProfile(difficulty: GameSettings["difficulty"]) {
+  if (difficulty === "新手") return "新手";
+  const pool = difficulty === "高手" ? expertProfiles : standardProfiles;
+  return pool[Math.floor(Math.random() * pool.length)];
 }
 
 function advanceTurn(state: GameState): GameState {

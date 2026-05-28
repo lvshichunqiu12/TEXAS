@@ -9,6 +9,7 @@ export type Card = {
 export type Street = "preflop" | "flop" | "turn" | "river" | "showdown";
 export type Difficulty = "新手" | "常规" | "高手";
 export type PlayerRole = "D" | "SB" | "BB";
+export type AiProfile = "新手" | "娱乐型" | "紧凶型" | "松凶型" | "均衡型";
 
 export type ActionType = "fold" | "check" | "call" | "bet" | "raise" | "all_in";
 
@@ -28,6 +29,7 @@ export type PlayerState = {
   stack: number;
   totalBuyIn: number;
   rebuyCount: number;
+  profile?: AiProfile;
   holeCards: Card[];
   folded: boolean;
   allIn: boolean;
