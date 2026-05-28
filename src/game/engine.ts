@@ -34,7 +34,7 @@ export function createGame(settings: Partial<GameSettings> = {}): GameState {
 }
 
 export function startNextHand(state: GameState): GameState {
-  return startHand(state.settings, state.handId + 1, nextSeat(state.dealerIndex, state.players.length));
+  return startHand(state.settings, state.handId + 1, nextSeat(state.dealerIndex, state.players.length), state.players);
 }
 
 export function resetGame(settings: Partial<GameSettings> = {}) {
@@ -169,7 +169,7 @@ export function currentPlayer(state: GameState) {
   return state.currentPlayerIndex === null ? undefined : state.players[state.currentPlayerIndex];
 }
 
-function startHand(settings: GameSettings, handId: number, dealerIndex: number): GameState {
+function startHand(settings: GameSettings, handId: number, dealerIndex: number, previousPlayers: PlayerState[] = []): GameState {
   const playerCount = settings.playerCount;
   const deck = shuffle(makeDeck());
   const players: PlayerState[] = Array.from({ length: playerCount }, (_, index) => ({
@@ -177,7 +177,7 @@ function startHand(settings: GameSettings, handId: number, dealerIndex: number):
     name: names[index],
     isHuman: index === 0,
     avatarIndex: index === 0 ? 7 : index - 1,
-    stack: settings.initialStack,
+    stack: previousPlayers[index] && previousPlayers[index].stack > 0 ? previousPlayers[index].stack : settings.initialStack,
     holeCards: [],
     folded: false,
     allIn: false,
@@ -209,12 +209,15 @@ function startHand(settings: GameSettings, handId: number, dealerIndex: number):
     dealerIndex,
     currentPlayerIndex: nextActionSeat(bigBlindIndex, players),
     street: "preflop",
-    currentBet: settings.bigBlind,
+    currentBet: players[bigBlindIndex].bet,
     minRaise: settings.bigBlind,
     logs: [
       `第 ${handId + 1} 手开始`,
-      `${players[smallBlindIndex].name} 小盲 ${settings.smallBlind}`,
-      `${players[bigBlindIndex].name} 大盲 ${settings.bigBlind}`
+      ...players
+        .filter((player, index) => (previousPlayers[index]?.stack ?? settings.initialStack) <= 0)
+        .map((player) => `${player.name} 自动补买入 ${settings.initialStack}`),
+      `${players[smallBlindIndex].name} 小盲 ${players[smallBlindIndex].bet}`,
+      `${players[bigBlindIndex].name} 大盲 ${players[bigBlindIndex].bet}`
     ],
     status: "playing"
   };
