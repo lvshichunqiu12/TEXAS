@@ -26,6 +26,8 @@ export type PlayerState = {
   isHuman: boolean;
   avatarIndex: number;
   stack: number;
+  totalBuyIn: number;
+  rebuyCount: number;
   holeCards: Card[];
   folded: boolean;
   allIn: boolean;

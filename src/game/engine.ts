@@ -172,19 +172,26 @@ export function currentPlayer(state: GameState) {
 function startHand(settings: GameSettings, handId: number, dealerIndex: number, previousPlayers: PlayerState[] = []): GameState {
   const playerCount = settings.playerCount;
   const deck = shuffle(makeDeck());
-  const players: PlayerState[] = Array.from({ length: playerCount }, (_, index) => ({
-    id: index,
-    name: names[index],
-    isHuman: index === 0,
-    avatarIndex: index === 0 ? 7 : index - 1,
-    stack: previousPlayers[index] && previousPlayers[index].stack > 0 ? previousPlayers[index].stack : settings.initialStack,
-    holeCards: [],
-    folded: false,
-    allIn: false,
-    bet: 0,
-    contributed: 0,
-    acted: false
-  }));
+  const players: PlayerState[] = Array.from({ length: playerCount }, (_, index) => {
+    const previous = previousPlayers[index];
+    const needsRebuy = Boolean(previous && previous.stack <= 0);
+
+    return {
+      id: index,
+      name: names[index],
+      isHuman: index === 0,
+      avatarIndex: index === 0 ? 7 : index - 1,
+      stack: previous && previous.stack > 0 ? previous.stack : settings.initialStack,
+      totalBuyIn: previous ? (previous.totalBuyIn ?? settings.initialStack) + (needsRebuy ? settings.initialStack : 0) : settings.initialStack,
+      rebuyCount: previous ? (previous.rebuyCount ?? 0) + (needsRebuy ? 1 : 0) : 0,
+      holeCards: [],
+      folded: false,
+      allIn: false,
+      bet: 0,
+      contributed: 0,
+      acted: false
+    };
+  });
 
   for (let cardIndex = 0; cardIndex < 2; cardIndex += 1) {
     for (const player of players) {

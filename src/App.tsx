@@ -8,6 +8,7 @@ import {
   RotateCcw,
   Settings,
   Sparkles,
+  Trophy,
   Users
 } from "lucide-react";
 import { type ReactNode, useEffect, useMemo, useState } from "react";
@@ -180,6 +181,8 @@ function App() {
           ))}
         </aside>
 
+        <Leaderboard players={game.players} />
+
         {game.result && (
           <aside className="result-panel" aria-label="牌局结果">
             <strong>{game.result.summary}</strong>
@@ -312,6 +315,38 @@ function SelectControl({
       <ChevronDown className="select-arrow" size={15} />
     </label>
   );
+}
+
+function Leaderboard({ players }: { players: PlayerState[] }) {
+  const ranked = [...players]
+    .map((player) => ({
+      ...player,
+      net: player.stack - player.totalBuyIn
+    }))
+    .sort((a, b) => b.net - a.net || b.stack - a.stack);
+
+  return (
+    <aside className="leaderboard-panel" aria-label="实时排行榜">
+      <div className="panel-title">
+        <Trophy size={15} />
+        实时排行
+      </div>
+      {ranked.map((player, index) => (
+        <div className="leaderboard-row" key={player.id}>
+          <span className="rank-number">{index + 1}</span>
+          <span className="leader-name">{player.name}</span>
+          <span className="leader-stack">{player.stack.toLocaleString()}</span>
+          <span className={`leader-net ${player.net >= 0 ? "positive" : "negative"}`}>{formatSigned(player.net)}</span>
+          {player.rebuyCount > 0 && <span className="rebuy-badge">R{player.rebuyCount}</span>}
+        </div>
+      ))}
+    </aside>
+  );
+}
+
+function formatSigned(value: number) {
+  if (value > 0) return `+${value}`;
+  return String(value);
 }
 
 function Seat({
